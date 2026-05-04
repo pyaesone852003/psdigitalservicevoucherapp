@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PS Digital Service - Print Voucher</title>
+    <style>
+        :root { --brand-primary: #a4c639; --brand-dark: #232f3e; --gray-light: #f8f9fa; }
+        body { font-family: 'Segoe UI', sans-serif; background: #eef1f4; margin: 0; padding: 10px; }
+        .app-container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        h2 { color: var(--brand-dark); border-bottom: 2px solid var(--brand-primary); padding-bottom: 10px; margin-top: 0; }
+        .section-title { font-size: 0.9rem; color: var(--brand-primary); font-weight: bold; margin: 15px 0 5px 0; text-transform: uppercase; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 0.8rem; margin-bottom: 4px; font-weight: 600; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
+        .btn-print { width: 100%; background: var(--brand-primary); color: white; padding: 15px; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 20px; }
+
+        /* Voucher Output Styling */
+        #voucher-output { display: none; background: white; padding: 30px; border: 1px solid #eee; }
+        .v-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--brand-primary); padding-bottom: 15px; }
+        .v-logo { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 2px solid var(--brand-primary); }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th { background: var(--gray-light); text-align: left; padding: 10px; border-bottom: 2px solid var(--brand-primary); }
+        td { padding: 12px 10px; border-bottom: 1px solid #eee; }
+
+        /* Print Settings */
+        @media print {
+            .no-print { display: none; }
+            body { background: white; padding: 0; }
+            .app-container { box-shadow: none; padding: 0; }
+            #voucher-output { display: block !important; border: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container no-print">
+    <h2>PS Digital Service</h2>
+    
+    <div class="section-title">Customer Info</div>
+    <div class="form-group"><label>Customer Name *</label><input type="text" id="custName"></div>
+    <div class="grid">
+        <div class="form-group"><label>Username *</label><input type="text" id="custUser" placeholder="@username"></div>
+        <div class="form-group"><label>Phone *</label><input type="tel" id="custPhone"></div>
+    </div>
+    
+    <div class="section-title">Service & Pricing</div>
+    <div class="form-group">
+        <label>Select Service *</label>
+        <select id="svcList" onchange="updatePrice()">
+            <option value="">-- ဝန်ဆောင်မှုရွေးချယ်ပါ --</option>
+            <option value="Viber old acc (AF)" data-price="30000">Viber old acc (AF) - 30,000 MMK</option>
+            <option value="Viber old acc (Code မကျ)" data-price="30000">Viber old acc (Code မကျ) - 30,000 MMK</option>
+            <option value="Viber new acc (AF)" data-price="20000">Viber new acc (AF) - 20,000 MMK</option>
+            <option value="Viber new acc (Code မကျ)" data-price="20000">Viber new acc (Code မကျ) - 20,000 MMK</option>
+            <option value="Viber Unblock Service" data-price="50000">Viber Unblock Service - 50,000 MMK</option>
+            <option value="80% Unblock Method" data-price="50000">80% Unblock Method - 50,000 MMK</option>
+        </select>
+
+</div>
+    <div class="grid">
+        <div class="form-group"><label>Quantity *</label><input type="number" id="svcQty" value="1" min="1" oninput="calculate()"></div>
+        <div class="form-group"><label>Unit Price (စိတ်ကြိုက်ပြင်နိုင်သည်)</label><input type="number" id="svcPrice" oninput="calculate()"></div>
+    </div>
+    <div class="form-group"><label>Total Amount (စိတ်ကြိုက်ပြင်နိုင်သည်)</label><input type="text" id="svcTotal"></div>
+    
+    <div class="section-title">Payment</div>
+    <div class="grid">
+        <div class="form-group">
+            <label>Method *</label>
+            <select id="payMethod"><option>KPay</option><option>WaveMoney</option></select>
+        </div>
+        <div class="form-group"><label>Txn Last 6 *</label><input type="text" id="payTxn" maxlength="6"></div>
+    </div>
+
+    <button class="btn-print" onclick="generateAndPrint()">Create & Print Voucher</button>
+</div>
+
+<div id="voucher-output">
+    <div class="v-header">
+        <img src="https://i.imgur.com/qU8yv6Y.png" class="v-logo" alt="PS Logo">
+        <div style="text-align:right">
+            <h3 style="margin:0; color:var(--brand-primary)">PS DIGITAL SERVICE</h3>
+            <p style="margin:2px 0; font-size: 0.8rem;">09670547295 | TG: @psservicestaff2026</p>
+        </div>
+    </div>
+
+    <div style="text-align:center; margin: 25px 0;">
+        <h2 style="margin:0; letter-spacing: 2px;">VOUCHER</h2>
+        <small id="outVid"></small>
+    </div>
+
+    <div class="grid" style="font-size: 0.9rem; margin-bottom: 20px;">
+        <div>
+            <strong>CUSTOMER:</strong><br>
+            Name: <span id="outCustName"></span><br>
+            User: <span id="outCustUser"></span><br>
+            Phone: <span id="outCustPhone"></span>
+        </div>
+        <div style="text-align: right;">
+            <strong>DATE:</strong> <span id="outDate"></span><br>
+            <strong>PAYMENT:</strong> <span id="outPayMethod"></span><br>
+            <strong>TXN:</strong> **<span id="outPayTxn"></span>
+        </div>
+    </div>
+
+    <table>
+        <thead><tr><th>Description</th><th>Qty</th><th style="text-align:right">Subtotal</th></tr></thead>
+        <tbody>
+            <tr>
+                <td><strong id="outSvcName"></strong></td>
+                <td id="outQty"></td>
+                <td id="outSubtotal" style="text-align:right"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div style="text-align: right; font-weight: bold; font-size: 1.5rem; color: var(--brand-primary); border-top: 2px solid #eee; padding-top: 15px;">
+        Total: <span id="resTotal"></span>
+    </div>
+
+    <div style="margin-top: 60px; text-align: center; font-size: 0.8rem; color: #888; border-top: 1px dashed #ccc; padding-top: 20px;">
+        Time: <span id="outCreatedAt"></span><br>
+        <strong>Thank you for choosing PS Digital Service!</strong>
+    </div>
+</div>
+
+<script>
+    function updatePrice() {
+        const select = document.getElementById('svcList');
+        const price = select.options[select.selectedIndex].getAttribute('data-price');
+        document.getElementById('svcPrice').value = price;
+        calculate();
+    }
+
+    function calculate() {
+        const p = parseFloat(document.getElementById('svcPrice').value) || 0;
+        const q = parseFloat(document.getElementById('svcQty').value) || 1;
+        document.getElementById('svcTotal').value = (p * q).toLocaleString() + " MMK";
+    }
+
+    function generateAndPrint() {
+        // Validation - အားလုံးဖြည့်ရမည်
+        const fields = ['custName', 'custUser', 'custPhone', 'svcList', 'svcPrice', 'svcTotal', 'payTxn'];
+        for (let f of fields) {
+            if (!document.getElementById(f).value) {
+                alert("ကျေးဇူးပြု၍ အကွက်အားလုံးကို အကုန်ဖြည့်ပါ!");
+                document.getElementById(f).focus();
+                return;
+            }
+        }
+
+// Mapping Data
+        document.getElementById('outVid').innerText = "ID: PS-" + Math.floor(1000 + Math.random() * 9000);
+        document.getElementById('outDate').innerText = new Date().toLocaleDateString();
+        document.getElementById('outCreatedAt').innerText = new Date().toLocaleString();
+        
+        document.getElementById('outCustName').innerText = document.getElementById('custName').value;
+        document.getElementById('outCustUser').innerText = document.getElementById('custUser').value;
+        document.getElementById('outCustPhone').innerText = document.getElementById('custPhone').value;
+        document.getElementById('outSvcName').innerText = document.getElementById('svcList').value;
+        document.getElementById('outQty').innerText = document.getElementById('svcQty').value;
+        document.getElementById('outSubtotal').innerText = document.getElementById('svcTotal').value;
+        document.getElementById('outPayMethod').innerText = document.getElementById('payMethod').value;
+        document.getElementById('outPayTxn').innerText = document.getElementById('payTxn').value;
+        document.getElementById('resTotal').innerText = document.getElementById('svcTotal').value;
+
+        // Print လုပ်ငန်းစဉ်
+        window.print();
+    }
+</script>
+</body>
+</html>
