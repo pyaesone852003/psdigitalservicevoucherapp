@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <title>PS Digital Service - Print Voucher</title>
     <style>
         :root { --brand-primary: #a4c639; --brand-dark: #232f3e; --gray-light: #f8f9fa; }
@@ -83,6 +84,14 @@
     </div>
 
     <button class="btn-print" onclick="generateAndPrint()">Create & Print Voucher</button>
+
+    <div id="voucher-area" style="padding: 20px; background: white; width: 450px;">
+    <h1>PS SERVICE VOUCHER</h1>
+    <p>Customer: Ko Phyo</p>
+</div>
+
+<button onclick="downloadPNG()">Download PNG</button>
+    
 </div>
 
 <div id="voucher-output">
@@ -135,6 +144,33 @@
 </div>
 
 <script>
+
+    async function downloadPNG() {
+    // ၁။ ဓာတ်ပုံရိုက်မယ့် Area ကို သတ်မှတ်ခြင်း
+    const element = document.getElementById('voucher-area'); 
+
+    try {
+        // ၂။ html2canvas သုံးပြီး ပုံအဖြစ် ပြောင်းလဲခြင်း
+        const canvas = await html2canvas(element, {
+            scale: 3,           // ပုံကြည်လင်အောင် Quality မြှင့်တာ (1 to 5)
+            useCORS: true,      // Online က Logo ပုံတွေပါအောင်
+            backgroundColor: "#ffffff" // Background ပုံမှန်ဖြူနေအောင်
+        });
+
+        // ၃။ ပုံကို Link အဖြစ် ပြောင်းလဲပြီး ဒေါင်းလုဒ်ဆွဲခြင်း
+        const image = canvas.toDataURL("image/png");
+        const link = document.createElement('a');
+        link.download = 'Voucher-Export.png'; // ပုံနာမည်
+        link.href = image;
+        link.click();
+
+    } catch (error) {
+        console.error("Oops! Error:", error);
+        alert("ပုံထုတ်လို့မရဖြစ်နေပါတယ်။ အင်တာနက်ဖွင့်ထားဖို့ လိုအပ်ပါတယ်။");
+    }
+}
+
+    
     function updatePrice() {
         const select = document.getElementById('svcList');
         const price = select.options[select.selectedIndex].getAttribute('data-price');
@@ -176,6 +212,8 @@
 
         // Print လုပ်ငန်းစဉ်
         window.print();
+
+
     }
 </script>
 </body>
