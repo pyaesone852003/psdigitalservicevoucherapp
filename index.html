@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <title>PS Digital Service - Print Voucher</title>
     <style>
         :root { --brand-primary: #a4c639; --brand-dark: #232f3e; --gray-light: #f8f9fa; }
@@ -144,30 +144,55 @@
 <script>
 
     async function downloadPNG() {
-    // ၁။ ဓာတ်ပုံရိုက်မယ့် Area ကို သတ်မှတ်ခြင်း
-    const element = document.getElementById('voucher-area'); 
+    // ၁။ အကွက်တိုင်းကို ဖြည့်ထားခြင်း ရှိ၊ မရှိ အရင်စစ်မယ်
+    const fields = ['custName', 'custUser', 'custPhone', 'svcList', 'svcPrice', 'svcTotal', 'payTxn'];
+    for (let f of fields) {
+        if (!document.getElementById(f).value) {
+            alert("ကျေးဇူးပြု၍ အကွက်အားလုံးကို အကုန်ဖြည့်ပါ!");
+            document.getElementById(f).focus();
+            return;
+        }
+    }
+
+    // ၂။ Voucher Template ထဲကို Data များ ဖြည့်ပေးခြင်း (Print ထုတ်သလိုမျိုး)
+    document.getElementById('outVid').innerText = "ID: PS-" + Math.floor(1000 + Math.random() * 9000);
+    document.getElementById('outDate').innerText = new Date().toLocaleDateString();
+    document.getElementById('outCustName').innerText = document.getElementById('custName').value;
+    document.getElementById('outCustUser').innerText = document.getElementById('custUser').value;
+    document.getElementById('outCustPhone').innerText = document.getElementById('custPhone').value;
+    document.getElementById('outSvcName').innerText = document.getElementById('svcList').value;
+    document.getElementById('outQty').innerText = document.getElementById('svcQty').value;
+    document.getElementById('outSubtotal').innerText = document.getElementById('svcTotal').value;
+    document.getElementById('outPayMethod').innerText = document.getElementById('payMethod').value;
+    document.getElementById('outPayTxn').innerText = document.getElementById('payTxn').value;
+    document.getElementById('resTotal').innerText = document.getElementById('svcTotal').value;
+    document.getElementById('outCreatedAt').innerText = new Date().toLocaleString();
+
+    // ၃။ Voucher အကွက်ကို ဓာတ်ပုံရိုက်ခြင်း
+    const voucherArea = document.getElementById('voucher-output');
+    
+    // ခဏတဖြုတ် အပြင်ထုတ်ပြမယ် (ဓာတ်ပုံရိုက်လို့ရအောင်)
+    voucherArea.style.display = 'block';
 
     try {
-        // ၂။ html2canvas သုံးပြီး ပုံအဖြစ် ပြောင်းလဲခြင်း
-        const canvas = await html2canvas(element, {
-            scale: 3,           // ပုံကြည်လင်အောင် Quality မြှင့်တာ (1 to 5)
-            useCORS: true,      // Online က Logo ပုံတွေပါအောင်
-            backgroundColor: "#ffffff" // Background ပုံမှန်ဖြူနေအောင်
+        const canvas = await html2canvas(voucherArea, {
+            scale: 3, // ပုံကြည်အောင်
+            useCORS: true,
+            backgroundColor: "#ffffff"
         });
 
-        // ၃။ ပုံကို Link အဖြစ် ပြောင်းလဲပြီး ဒေါင်းလုဒ်ဆွဲခြင်း
-        const image = canvas.toDataURL("image/png");
+        // ၄။ ပုံကို ဒေါင်းလုဒ်ဆွဲချခြင်း
         const link = document.createElement('a');
-        link.download = 'Voucher-Export.png'; // ပုံနာမည်
-        link.href = image;
+        link.download = PS-Voucher-${document.getElementById('custName').value}.png;
+        link.href = canvas.toDataURL("image/png");
         link.click();
-
-    } catch (error) {
-        console.error("Oops! Error:", error);
-        alert("ပုံထုတ်လို့မရဖြစ်နေပါတယ်။ အင်တာနက်ဖွင့်ထားဖို့ လိုအပ်ပါတယ်။");
+    } catch (e) {
+        alert("Error: ပုံထုတ်မရဖြစ်နေပါတယ်။");
     }
-}
 
+    // ၅။ ပုံရိုက်ပြီးရင် Voucher ကို ပြန်ဖျောက်ထားမယ် (Print အနေနဲ့ပဲ ထားချင်ရင်)
+    voucherArea.style.display = 'none';
+}
     
     function updatePrice() {
         const select = document.getElementById('svcList');
